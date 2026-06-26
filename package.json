@@ -1,0 +1,12 @@
+{
+    "type":"module",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js"
+    },
+    "devDependencies": {
+        "cors":"lates",
+        "dotenv": "latest",
+        "express": "latest"
+    }
+}

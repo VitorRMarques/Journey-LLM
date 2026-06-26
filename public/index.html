@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projeto LLM com OpenRouter</title>
+  <canvas id="stars"></canvas>
+
+  <!-- Fontes para títulos e corpo -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      padding-left: 20px;
+      background: linear-gradient(#110027, #5200bd, #0e0716);
+      font-family: 'Inter', sans-serif;
+      max-width: 850px;
+      margin: 32px auto;
+    }
+
+    h1 {
+      padding-left: 333px;
+      font-size: 3rem;
+      font-weight: bold;
+      color: #6e00a1;
+      text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px rgb(166, 0, 216), 0 0 40px #0ff, 0 0 80px #0ff;
+      animation: pulsar 1.5s infinite alternate;
+    }
+
+    @keyframes pulsar {
+      0% { text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #0ff, 0 0 40px #0ff, 0 0 80px #0ff; }
+      100% { text-shadow: 0 0 10px #fff, 0 0 20px #0ff, 0 0 30px #0ff, 0 0 60px #0ff, 0 0 100px #0ff; }
+    }
+
+    .user-msg {
+      border-radius: 12px;
+      width: 100%;
+      margin: 5px;
+      height: 60px;
+      text-align: center;
+      font-size: 16px;
+      background-color: rgb(253, 191, 253);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .botao-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 15px 40px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 25px;
+      border: none;
+      background: linear-gradient(135deg, #02a302, #04e704);
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.3s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #04e704, #02a302);
+    }
+
+    .campo-respostas {
+      display: grid;
+      background-color: #6700ee;
+      align-items: center;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 100%;
+      word-wrap: break-word;
+      padding: 20px;
+    }
+
+    .card {
+      font-family: 'Inter', sans-serif;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 16px 0;
+      background: linear-gradient(135deg, #6a00f4, #9b59b6);
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      color: #fff;
+      transition: transform 0.2s ease;
+      animation: fadeInUp 0.6s ease;
+    }
+    .card:hover { transform: translateY(-5px); }
+
+    .card h2 {
+    font-family: 'Merriweather', serif;
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #fff;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+    }
+
+    .card h3 {
+    font-family: 'Merriweather', serif;
+    font-size: 20px;
+    margin-top: 12px;
+    color: #ffe082;
+    }
+
+    .card ul {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-left: 20px;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* cores por disciplina */
+    .programacao { background: #6a00f4; }
+    .algoritmos { background: #0077b6; }
+    .redes { background: #2a9d8f; }
+    .sistemas { background: #e76f51; }
+    .banco { background: #264653; }
+
+    #stars {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: block;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+    <h1>Journey</h1>
+    <p>Vamos iniciar a jornada!</p>
+
+    <textarea class="user-msg"  id="prompt" placeholder="⭐⭐⭐ Ola! Escreva AQUI as disciplinas que voce estuda, farei um roadmap para voce! ⭐⭐⭐"></textarea>
+    <br><br>
+
+    <div class="botao-container">
+        <button onclick="enviar()">Enviar</button>
+    </div>
+
+    <div class="campo-respostas" id="resposta">
+        A resposta aparece aqui.
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const canvas = document.getElementById("stars");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const stars = [];
+        for (let i = 0; i < 300; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1,
+                speed: Math.random() * 0.02 + 0.01
+            });
+        }
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "white";
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill()
+            }); 
+        }
+        function updateStars() {
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
+        }
+        function animate() {
+            drawStars();
+            updateStars();
+            requestAnimationFrame(animate)
+        }
+
+        animate();
+
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        })
+
+        async function enviar() {
+            const prompt = document.getElementById("prompt").value;
+            const output = document.getElementById("resposta");
+            
+            output.innerHTML = "<span style='color:yellow'>Formulando resposta...</span>";
+
+            try {
+                const response = await fetch("/api/llm", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json"},
+                    body: JSON.stringify({ prompt })
+                })
+                const data = await response.json()
+
+                if (!response.ok){
+                    output.innerHTML = `<div class="ai-msg"> ${data.erro || "Erro Desconhecido."} </div>`;
+                    return
+                }
+                const texto = data.resposta;
+                const blocos = texto.split("\n\n");
+
+                output.innerHTML = blocos.map(bloco => {
+                    let partes = bloco.split(":")
+                    let titulo = bloco.split(":")[0].trim().toLowerCase();
+                    let conteudo = partes[1] ? partes[1].trim().split("\n").map(item => `<li>${item}</li>`).join("") : "";
+                    let classe = titulo.includes("programacao") ? "programacao" :
+                                 titulo.includes("algoritmos") ? "algoritmos" : 
+                                 titulo.includes("redes") ? "redes" : 
+                                 titulo.includes("sistemas") ? "sistemas" : 
+                                 titulo.includes("banco") ? "banco" : "card";
+                    return `
+                       <div class="card ${classe}">
+                         <h2>${titulo}</h2>
+                         <h3>Conteudo</h3>
+                         <ul>${conteudo}</ul>
+                        </div>
+                    `;
+                }).join("");
+            } catch (error) {
+                output.innerHTML = `<div class="ai-msg">Erro ao conectar com API Local.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
