@@ -74,13 +74,13 @@ Journey/
 ## 1) Clone o repositório
 
 ```bash
-git clone https://github.com/SEU-USUARIO/Journey.git
+git clone https://github.com/SEU-USUARIO/Journey-LLM.git
 ```
 
 Entre na pasta:
 
 ```bash
-cd Journey
+cd Journey-LLM
 ```
 
 ---
