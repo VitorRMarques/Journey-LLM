@@ -46,24 +46,25 @@
     .botao-container {
       display: flex;
       justify-content: center;
-      margin-top: 20px;
+      padding: 2rem;
     }
 
     button {
-      padding: 15px 40px;
+      padding: 12px 28px;
+      position: relative;
       font-size: 16px;
       cursor: pointer;
       border-radius: 25px;
       border: none;
-      background: linear-gradient(135deg, #02a302, #04e704);
+      background: linear-gradient(135deg, #3202a3, #000000);
       font-weight: bold;
-      color: white;
+      color: rgb(56, 255, 245);
       box-shadow: 0 4px 8px rgba(0,0,0,0.3);
       transition: transform 0.2s, background 0.3s;
     }
     button:hover {
       transform: scale(1.05);
-      background: linear-gradient(135deg, #04e704, #02a302);
+      background: linear-gradient(135deg, #0c4a7c, #0952d0);
     }
 
     .campo-respostas {
@@ -131,11 +132,22 @@
       display: block;
       z-index: -1;
     }
+    .subtitle-container {
+      display: flex;
+      justify-content: center;
+    }
+    .subtitle-container p{
+      color: rgb(178, 137, 255);
+      font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    }
   </style>
 </head>
 <body>
     <h1>Journey</h1>
-    <p>Vamos iniciar a jornada!</p>
+
+    <div class="subtitle-container">
+      <p>Vamos iniciar a jornada!</p>
+    </div>
 
     <textarea class="user-msg"  id="prompt" placeholder="⭐⭐⭐ Ola! Escreva AQUI as disciplinas que voce estuda, farei um roadmap para voce! ⭐⭐⭐"></textarea>
     <br><br>
@@ -147,7 +159,7 @@
     <div class="campo-respostas" id="resposta">
         A resposta aparece aqui.
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <script>
         const canvas = document.getElementById("stars");
         const ctx = canvas.getContext("2d");
@@ -196,47 +208,104 @@
         })
 
         async function enviar() {
-            const prompt = document.getElementById("prompt").value;
-            const output = document.getElementById("resposta");
-            
-            output.innerHTML = "<span style='color:yellow'>Formulando resposta...</span>";
 
-            try {
-                const response = await fetch("/api/llm", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json"},
-                    body: JSON.stringify({ prompt })
-                })
-                const data = await response.json()
+        const prompt = document.getElementById("prompt").value;
+        const output = document.getElementById("resposta");
 
-                if (!response.ok){
-                    output.innerHTML = `<div class="ai-msg"> ${data.erro || "Erro Desconhecido."} </div>`;
-                    return
-                }
-                const texto = data.resposta;
-                const blocos = texto.split("\n\n");
+        output.innerHTML = "<span style='color:yellow'>Formulando resposta...</span>";
 
-                output.innerHTML = blocos.map(bloco => {
-                    let partes = bloco.split(":")
-                    let titulo = bloco.split(":")[0].trim().toLowerCase();
-                    let conteudo = partes[1] ? partes[1].trim().split("\n").map(item => `<li>${item}</li>`).join("") : "";
-                    let classe = titulo.includes("programacao") ? "programacao" :
-                                 titulo.includes("algoritmos") ? "algoritmos" : 
-                                 titulo.includes("redes") ? "redes" : 
-                                 titulo.includes("sistemas") ? "sistemas" : 
-                                 titulo.includes("banco") ? "banco" : "card";
-                    return `
-                       <div class="card ${classe}">
-                         <h2>${titulo}</h2>
-                         <h3>Conteudo</h3>
-                         <ul>${conteudo}</ul>
-                        </div>
-                    `;
-                }).join("");
-            } catch (error) {
-                output.innerHTML = `<div class="ai-msg">Erro ao conectar com API Local.</div>`;
+        try {
+        
+            const response = await fetch("/api/llm", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ prompt })
+            });
+          
+            const data = await response.json();
+          
+            if (!response.ok) {
+                output.innerHTML = `
+                    <div class="card">
+                        ${data.erro || "Erro desconhecido."}
+                    </div>
+                `;
+                return;
             }
+          
+            const roadmap = data.roadmap;
+          
+        
+            output.innerHTML = "";
+          
+        
+            output.innerHTML += `
+                <div class="card">
+                    <h2>${roadmap.titulo}</h2>
+                
+                    <p><strong>📚 Descrição:</strong> ${roadmap.descricao}</p>
+                
+                    <p><strong>🎯 Nível:</strong> ${roadmap.nivel}</p>
+                
+                    <p><strong>⏳ Duração:</strong> ${roadmap.duracao_total}</p>
+                </div>
+            `;
+              
+    
+            roadmap.modulos.forEach(modulo => {
+            
+                output.innerHTML += `
+                    <div class="card">
+                    
+                        <h2>${modulo.icone} ${modulo.nome}</h2>
+                    
+                        <p>
+                            <strong>⏱ Tempo:</strong>
+                            ${modulo.tempo}
+                        </p>
+                      
+                        <p>
+                            ${modulo.descricao}
+                        </p>
+                      
+                        <h3>📖 Conteúdos</h3>
+                      
+                        <ul>
+                            ${modulo.conteudos
+                                .map(c => `<li>${c}</li>`)
+                                .join("")}
+                        </ul>
+                      
+                        <h3>🚀 Projeto</h3>
+                      
+                        <p>${modulo.projeto}</p>
+                      
+                        <h3>📚 Recursos</h3>
+                      
+                        <ul>
+                            ${modulo.recursos
+                                .map(r => `<li>${r}</li>`)
+                                .join("")}
+                        </ul>
+                      
+                    </div>
+                `;
+                  
+            });
+          
+        } catch (error) {
+        
+            output.innerHTML = `
+                <div class="card">
+                    Erro ao conectar com a API Local.
+                </div>
+            `;
+              
         }
+}
+            
     </script>
 </body>
 </html>

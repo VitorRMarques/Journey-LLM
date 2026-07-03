@@ -3,6 +3,7 @@ import cors from "cors"
 import "dotenv/config"
 
 
+
 const app = express()
 const PORT = 3000
 const API_KEY = process.env.OPENROUTER_API_KEY
@@ -43,7 +44,49 @@ app.post("/api/llm", async (req, res) => {
                 messages: [
                     {
                         role: "system",
-                        content: "Você é um tutor especializado em Computação. Sua tarefa é organizar as disciplinas fornecidas pelo usuário em um roadmap de estudos. Cada disciplina deve ser apresentada em blocos separados, com subtópicos claros e estruturados. O estilo da resposta deve ser organizado e visualmente distinto para cada disciplina."
+                        content: `
+                        Você é um especialista em criar roadmaps de estudos para programação.
+
+Sua resposta DEVE ser SOMENTE um JSON válido.
+
+NÃO escreva markdown.
+
+NÃO utilize \`\`\`.
+
+NÃO explique nada.
+
+NÃO escreva texto antes nem depois do JSON.
+
+O formato obrigatório é:
+
+{
+  "titulo": "Roadmap de Ciencia de Dados.",
+  "descricao": "Plano de estudos para iniciantes.",
+  "nivel": "Iniciante",
+  "duracao_total": "6 meses",
+  "modulos": [
+    {
+      "id": 1,
+      "nome": "Python",
+      "icone": 🐍",
+      "tempo": "3 semanas",
+      "descricao": "Aprender os fundamentos da linguagem",
+      "conteudos": [
+        "Variaveis",
+        "Funcoes",
+        "Loops"
+      ],
+      "projeto": "Criar uma calculadora",
+      "recursos": [
+        "curso em Video",
+        "Documentacao Python"
+      ]
+    }
+  ]
+}
+
+Responda SOMENTE com o JSON.
+                        `
                     },
                     {
                         role: "user",
@@ -51,7 +94,7 @@ app.post("/api/llm", async (req, res) => {
                     }
                 ],
                 temperature: 0.7,
-                max_tokens: 700
+                max_tokens: 2000
             })
         });
 
@@ -65,13 +108,42 @@ app.post("/api/llm", async (req, res) => {
         }
 
         const data = await response.json()
-        const text = await data.choices?.[0]?.message?.content
+        let text = data.choices?.[0]?.message?.content
 
         if (!text){
             return res.status(502).json({erro: "Resposta vazia ou inesperada."})
         }
 
-        res.json({ modelo: MODEL, resposta: text, uso: data.usage ?? null })
+        text = text
+        .replace(/^```json/i, "")
+        .replace(/^```/, "")
+        .replace(/```$/, "").trim();
+
+        let roadmap;
+
+        try {
+            roadmap = JSON.parse(text);
+            if (
+                !roadmap.titulo ||
+                !roadmap.modulos ||
+                !Array.isArray(roadmap.modulos)
+            ) {
+                return res.status(500).json({
+                    erro: "Formato do roadmap invalido",
+                    resposta: roadmap
+                })
+            }
+        } catch (err) {
+            return res.status(500).json({
+                erro: "A IA retornou um JSON inválido.",
+                resposta: text
+            });
+        }
+
+        res.json({ 
+            modelo: MODEL,
+            roadmap,
+            uso: data.usage ?? null })
     } catch (error) {
         res.status(500).json({erro: "erro interno no servidor", detalhe: error.message })
     }
