@@ -4,6 +4,9 @@ O **Journey** é uma aplicação web que utiliza Inteligência Artificial para g
 
 A ideia é transformar uma simples lista de matérias em uma **jornada organizada de aprendizado**, permitindo que estudantes tenham uma visão clara dos conteúdos, da sequência ideal de estudos, dos projetos sugeridos e dos recursos recomendados.
 
+<img width="1277" height="575" alt="image" src="https://github.com/user-attachments/assets/725361a3-31df-4001-825c-be8dc4cd7adc" />
+
+
 ---
 
 # 📚 Objetivo
