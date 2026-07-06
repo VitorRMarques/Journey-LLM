@@ -1,4 +1,4 @@
-# 🚀 Journey - Roadmaps Inteligentes para Estudos em Computação
+# 🚀 Journey - Roadmaps Inteligentes para Estudos.
 
 O **Journey** é uma aplicação web que utiliza Inteligência Artificial para gerar **roadmaps personalizados de estudos** para disciplinas da área de Computação.
 
